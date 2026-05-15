@@ -1,0 +1,102 @@
+/* --- Tambahan Khusus untuk Tampilan Katalog Produk --- */
+
+/* Container Utama Grid */
+.product-catalog-grid {
+    display: grid;
+    /* Membuat grid responsif, kotak-kotak akan otomatis menyesuaikan lebar layar */
+    grid-template-columns: repeat(auto-fill, minmax(220px, 1fr));
+    gap: 25px;
+    padding: 20px 0;
+}
+
+/* Gaya Card Produk Individu (Diadaptasi dari .card) */
+.product-card {
+    background-color: var(--white);
+    border-radius: 12px;
+    box-shadow: 0 5px 15px rgba(0,0,0,0.08);
+    overflow: hidden;
+    transition: 0.3s;
+    text-align: center;
+    padding: 15px; /* Sedikit padding agar isinya tidak terlalu padat */
+}
+
+/* Efek saat mouse mendekat */
+.product-card:hover {
+    transform: translateY(-5px);
+    box-shadow: 0 10px 20px rgba(0,0,0,0.15);
+}
+
+/* Placeholder Gaya untuk Gambar Produk */
+.product-image-placeholder {
+    width: 100%;
+    height: 150px; /* Tinggi kotak placeholder */
+    background-color: #eee; /* Warna latar abu-abu muda */
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    margin-bottom: 15px;
+    border-radius: 8px; /* Sudut sedikit membulat */
+    border: 1px dashed #ccc; /* Batas putus-putus agar terlihat seperti placeholder */
+}
+
+/* Placeholder Gaya untuk Logo di Sidebar */
+.logo-header-placeholder {
+    width: 60px;
+    height: 60px;
+    display: block;
+    margin: 0 auto 10px;
+    border-radius: 50%;
+    border: 1px dashed rgba(255,255,255,0.4); /* Batas putus-putus putih */
+    background-color: rgba(255,255,255,0.1);
+}
+
+/* Gaya Text Produk (Sesuai Screenshot) */
+.product-card h3 {
+    font-size: 1rem;
+    color: var(--text-dark);
+    margin-bottom: 5px;
+}
+
+.product-category {
+    font-size: 0.8rem;
+    color: #888;
+    margin-bottom: 10px;
+    text-transform: uppercase;
+    letter-spacing: 1px;
+}
+
+/* Gaya Harga dan Stok */
+.product-meta {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-top: 10px;
+    border-top: 1px solid #eee;
+    padding-top: 10px;
+}
+
+.product-price {
+    font-size: 1rem;
+    color: var(--primary-green);
+    font-weight: bold;
+}
+
+/* Gaya Badge Stok */
+.product-stock {
+    font-size: 0.8rem;
+    padding: 4px 8px;
+    border-radius: 4px;
+    font-weight: 600;
+}
+
+/* Status Stok Normal */
+.status-normal {
+    color: var(--green-accent);
+    background-color: rgba(56, 142, 60, 0.1); /* Latar hijau transparan */
+}
+
+/* Status Stok Rendah/Tipis */
+.status-low {
+    color: var(--red-accent);
+    background-color: rgba(211, 47, 47, 0.1); /* Latar merah transparan */
+}
