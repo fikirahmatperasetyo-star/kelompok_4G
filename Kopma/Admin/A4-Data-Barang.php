@@ -32,11 +32,11 @@ for ($i = 0; $i < 6; $i++) {
 
     // 2. Ambil RINCIAN BARANG APA SAJA YANG TERJUAL PADA PERIODE INI
     $q_barang_detail = $conn->query("
-        SELECT d.nama_produk, SUM(d.qty) as total_qty, SUM(d.subtotal) as total_subtotal 
-        FROM detail_pesanan d 
-        JOIN pesanan p ON d.kode_pesanan = p.kode_pesanan 
+        SELECT d.nama_produk, d.harga as harga_satuan, SUM(d.qty) as total_qty, SUM(d.subtotal) as total_subtotal
+        FROM detail_pesanan d
+        JOIN pesanan p ON d.kode_pesanan = p.kode_pesanan
         WHERE p.status='Selesai' AND p.waktu_pesan BETWEEN '$start_date' AND '$end_date'
-        GROUP BY d.nama_produk
+        GROUP BY d.nama_produk, d.harga
         ORDER BY total_qty DESC
     ");
     
@@ -71,7 +71,7 @@ for ($i = 0; $i < 6; $i++) {
     <title>Kopma Mart</title>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
     <link rel="stylesheet" href="../Style/Dashboard.css">
-    <link rel="icon" href="../WebPictures/LOGO KOPMA.png" type="image/png">
+    <link rel="icon" href="../WebPictures/LOGO_KOPMA.png" type="image/png">
     <style>
         .btn-print { background-color: #1976d2; color: white; padding: 6px 12px; border: none; border-radius: 6px; cursor: pointer; font-weight: bold; font-size: 0.85rem;}
         .btn-print:hover { background-color: #1565c0; }
@@ -81,31 +81,88 @@ for ($i = 0; $i < 6; $i++) {
         .modal-content { background-color: #fff; margin: 5% auto; padding: 25px; border-radius: 10px; width: 60%; max-width: 800px; box-shadow: 0 5px 15px rgba(0,0,0,0.3); position: relative; max-height: 80vh; overflow-y: auto;}
         .close-btn { position: absolute; right: 20px; top: 15px; color: #aaa; font-size: 28px; font-weight: bold; cursor: pointer; }
         .close-btn:hover { color: red; }
-        .detail-table { width: 100%; border-collapse: collapse; margin-top: 15px; }
-        .detail-table th, .detail-table td { border-bottom: 1px solid #ddd; padding: 10px; text-align: left; }
-        .detail-table th { background-color: #f4f7f6; color: #333; font-size: 0.9rem;}
+        .detail-table {
+            width: 85%;
+            border-collapse: collapse;
+            margin: 15px auto 0 auto;
+            max-width: 100%;
+        }
+        .detail-table th, .detail-table td {
+            border: 1px solid #ddd;
+            padding: 12px 15px;
+            text-align: left;
+            font-size: 0.95rem;
+        }
+        .detail-table th {
+            background-color: #f4f7f6;
+            color: #333;
+            font-size: 1rem;
+            font-weight: bold;
+        }
 
         /* CSS KHUSUS PRINT PDF (Diperbaiki agar tidak bocor di background) */
         @media print {
-            body { background: white; }
+            * { margin: 0; padding: 0; box-sizing: border-box; }
+            html, body { 
+                background: white; 
+                margin: 0;
+                padding: 0;
+                width: 100%;
+                height: 100%;
+            }
             /* Sembunyikan elemen web utama sepenuhnya */
-            .container, .modal, .sidebar { display: none !important; } 
+            .container, .modal, .sidebar, .sidebar-backdrop, header, .cards-container, .table-section, .content-box, .btn-print { 
+                display: none !important; 
+            } 
             
             /* Tampilkan HANYA area cetak */
-            #print-container { display: block !important; width: 100%; }
+            #print-container { 
+                display: block !important; 
+                width: 100%; 
+                margin: 0;
+                padding: 20px;
+                page-break-inside: avoid;
+            }
             
             /* Penyesuaian garis tabel untuk PDF agar rapi */
-            .detail-table { border: 1px solid #000; }
-            .detail-table th, .detail-table td { border: 1px solid #000 !important; color: #000 !important; }
+            .detail-table {
+                border-collapse: collapse;
+                width: 85%;
+                margin: 0 auto;
+                max-width: 100%;
+            }
+            .detail-table th, .detail-table td {
+                border: 1px solid #000 !important;
+                color: #000 !important;
+                padding: 10px 12px;
+                font-size: 0.9rem;
+            }
+            .detail-table th {
+                font-weight: bold !important;
+            }
+            
+            /* Pastikan tidak ada overflow atau elemen tersembunyi */
+            body > div:not(#print-container) { display: none !important; }
         }
     </style>
 </head>
 <body>
 
+<!-- Sidebar Backdrop -->
+<div class="sidebar-backdrop" id="sidebarBackdrop"></div>
+
 <div class="container">
-    <aside class="sidebar">
+    
+    <!-- Hamburger Menu Button -->
+    <button class="hamburger-btn" id="hamburgerBtn">
+        <span></span>
+        <span></span>
+        <span></span>
+    </button>
+    
+    <aside class="sidebar" id="sidebar">
         <div class="logo-section">
-            <img src="LOGO KOPMA.png" alt="Logo Kopma">
+            <img src="../WebPictures/LOGO_KOPMA.png" alt="Logo Kopma">
             <h2>KOPMA MART</h2>
         </div>
 
@@ -245,22 +302,36 @@ foreach ($laporan_data as $laporan) {
             <table class="detail-table">
                 <tr>
                     <th>Nama Produk</th>
+                    <th style="text-align: center;">Harga Satuan</th>
                     <th style="text-align: center;">Total Kuantitas (Qty)</th>
                     <th>Subtotal Pendapatan</th>
                 </tr>
-                <?php 
+                <?php
                 if(empty($laporan['detail_produk'])) {
-                    echo "<tr><td colspan='3' style='text-align: center; font-style: italic; color: #999;'>Tidak ada barang terjual pada periode ini.</td></tr>";
+                    echo "<tr><td colspan='4' style='text-align: center; font-style: italic; color: #999;'>Tidak ada barang terjual pada periode ini.</td></tr>";
                 } else {
-                    foreach ($laporan['detail_produk'] as $barang) { 
+                    $total_qty_all = 0;
+                    $total_subtotal_all = 0;
+                    foreach ($laporan['detail_produk'] as $barang) {
+                        $total_qty_all += $barang['total_qty'];
+                        $total_subtotal_all += $barang['total_subtotal'];
                 ?>
                     <tr>
                         <td><?php echo htmlspecialchars($barang['nama_produk']); ?></td>
+                        <td style="text-align: center; font-weight: bold;">Rp <?php echo number_format($barang['harga_satuan'], 0, ',', '.'); ?></td>
                         <td style="text-align: center; font-weight: bold;"><?php echo $barang['total_qty']; ?>x</td>
                         <td style="font-weight: bold; color: #333;">Rp <?php echo number_format($barang['total_subtotal'], 0, ',', '.'); ?></td>
                     </tr>
-                <?php 
-                    } 
+                <?php
+                    }
+                    // Total row
+                    ?>
+                    <tr style="background-color: #f0f0f0; border-top: 2px solid #3c8a55;">
+                         <td colspan="2" style="font-weight: bold;">TOTAL</td>
+                         <td style="text-align: center; font-weight: bold; color: #3c8a55;"><?php echo $total_qty_all; ?>x</td>
+                         <td style="font-weight: bold; color: #3c8a55;">Rp <?php echo number_format($total_subtotal_all, 0, ',', '.'); ?></td>
+                     </tr>
+                <?php
                 }
                 ?>
             </table>
@@ -272,6 +343,44 @@ foreach ($laporan_data as $laporan) {
 
 <!-- KONTOLER UNTUK PRINT -->
 <div id="print-container" style="display: none;"></div>
+
+<script>
+    // Hamburger Menu Toggle
+    const hamburgerBtn = document.getElementById('hamburgerBtn');
+    const sidebar = document.getElementById('sidebar');
+    const sidebarBackdrop = document.getElementById('sidebarBackdrop');
+    
+    hamburgerBtn.addEventListener('click', function() {
+        hamburgerBtn.classList.toggle('active');
+        sidebar.classList.toggle('active');
+        sidebarBackdrop.classList.toggle('active');
+    });
+    
+    // Close sidebar ketika klik menu item
+    document.querySelectorAll('.menu ul li, .menu a').forEach(item => {
+        item.addEventListener('click', function() {
+            hamburgerBtn.classList.remove('active');
+            sidebar.classList.remove('active');
+            sidebarBackdrop.classList.remove('active');
+        });
+    });
+    
+    // Close sidebar ketika klik backdrop
+    sidebarBackdrop.addEventListener('click', function() {
+        hamburgerBtn.classList.remove('active');
+        sidebar.classList.remove('active');
+        sidebarBackdrop.classList.remove('active');
+    });
+    
+    // Close sidebar ketika klik di luar
+    document.addEventListener('click', function(event) {
+        if (!sidebar.contains(event.target) && !hamburgerBtn.contains(event.target)) {
+            hamburgerBtn.classList.remove('active');
+            sidebar.classList.remove('active');
+            sidebarBackdrop.classList.remove('active');
+        }
+    });
+</script>
 
 <script>
     function bukaModal(modalId) {

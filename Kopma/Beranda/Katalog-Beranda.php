@@ -65,9 +65,180 @@ foreach ($_SESSION['keranjang'] as $item) {
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Kopma Mart</title>
-    <link rel="icon" href="../WebPictures/LOGO KOPMA.png" type="image/png">
+    <link rel="icon" href="../WebPictures/LOGO_KOPMA.png" type="image/png">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
     <link rel="stylesheet" href="../Style/Katalog-Beranda.css">
     
+    <style>
+        /* Floating Cart Button */
+        .floating-cart-btn {
+            position: fixed;
+            bottom: 30px;
+            right: 30px;
+            width: 60px;
+            height: 60px;
+            background: linear-gradient(135deg, #2d5a3a 0%, #3c8a55 100%);
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            box-shadow: 0 4px 15px rgba(45, 90, 58, 0.4);
+            cursor: pointer;
+            z-index: 1000;
+            transition: all 0.3s ease;
+            text-decoration: none;
+            color: white;
+        }
+        
+        .floating-cart-btn:hover {
+            transform: scale(1.1);
+            box-shadow: 0 6px 20px rgba(45, 90, 58, 0.6);
+        }
+        
+        .floating-cart-btn i {
+            font-size: 24px;
+        }
+        
+        .floating-cart-badge {
+            position: absolute;
+            top: -5px;
+            right: -5px;
+            background: #ff4444;
+            color: white;
+            border-radius: 50%;
+            width: 24px;
+            height: 24px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 12px;
+            font-weight: bold;
+            border: 2px solid white;
+            animation: pulse 2s infinite;
+        }
+        
+        @keyframes pulse {
+            0%, 100% { transform: scale(1); }
+            50% { transform: scale(1.1); }
+        }
+        
+        /* Flying Animation */
+        @keyframes flyToCart {
+            0% {
+                transform: translate(0, 0) scale(1);
+                opacity: 1;
+            }
+            50% {
+                transform: translate(var(--tx), var(--ty)) scale(0.5);
+                opacity: 0.8;
+            }
+            100% {
+                transform: translate(var(--tx), var(--ty)) scale(0.2);
+                opacity: 0;
+            }
+        }
+        
+        .flying-item {
+            position: fixed;
+            pointer-events: none;
+            z-index: 9999;
+            animation: flyToCart 0.8s ease-in-out;
+        }
+        
+        .flying-item img {
+            width: 60px;
+            height: 60px;
+            object-fit: cover;
+            border-radius: 8px;
+            box-shadow: 0 4px 10px rgba(0,0,0,0.3);
+        }
+        
+        /* Success Toast Notification */
+        .toast-notification {
+            position: fixed;
+            top: 20px;
+            right: 20px;
+            background: white;
+            padding: 15px 20px;
+            border-radius: 10px;
+            box-shadow: 0 4px 15px rgba(0,0,0,0.2);
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            z-index: 10000;
+            animation: slideInRight 0.3s ease-out;
+            max-width: 300px;
+        }
+        
+        @keyframes slideInRight {
+            from {
+                transform: translateX(400px);
+                opacity: 0;
+            }
+            to {
+                transform: translateX(0);
+                opacity: 1;
+            }
+        }
+        
+        .toast-notification.hide {
+            animation: slideOutRight 0.3s ease-in forwards;
+        }
+        
+        @keyframes slideOutRight {
+            from {
+                transform: translateX(0);
+                opacity: 1;
+            }
+            to {
+                transform: translateX(400px);
+                opacity: 0;
+            }
+        }
+        
+        .toast-icon {
+            width: 40px;
+            height: 40px;
+            background: #4caf50;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: white;
+            font-size: 20px;
+        }
+        
+        .toast-content {
+            flex: 1;
+        }
+        
+        .toast-title {
+            font-weight: bold;
+            color: #333;
+            margin-bottom: 3px;
+        }
+        
+        .toast-message {
+            font-size: 13px;
+            color: #666;
+        }
+        
+        /* Mobile Responsive */
+        @media (max-width: 768px) {
+            .floating-cart-btn {
+                bottom: 20px;
+                right: 20px;
+                width: 55px;
+                height: 55px;
+            }
+            
+            .toast-notification {
+                right: 10px;
+                left: 10px;
+                max-width: none;
+            }
+        }
+    </style>
 </head>
 <body>
 
@@ -93,7 +264,7 @@ foreach ($_SESSION['keranjang'] as $item) {
                 </div>
             </div>
             <div class="hero-logo">
-                <img src="../WebPictures/LOGO KOPMA.png" alt="Kopma Berdikari">
+                <img src="../WebPictures/LOGO_KOPMA.png" alt="Kopma Berdikari">
             </div>
         </section>
 
@@ -101,7 +272,7 @@ foreach ($_SESSION['keranjang'] as $item) {
             <div class="category-card cat-0" onclick="filterKategori('semua')">
                 <h3>Semua</h3>
                 <p>Seluruh produk Kopma Mart</p>
-                <img src="../WebPictures/Semua.png" alt="Semua" class="category-img">
+                <img src="../WebPictures/SEMUA.png" alt="Semua" class="category-img">
             </div>
             
             <div class="category-card cat-1" onclick="filterKategori('makanan')">
@@ -156,6 +327,14 @@ foreach ($_SESSION['keranjang'] as $item) {
         </section>
     </div>
 
+    <!-- Floating Cart Button -->
+    <a href="ValidasiPemesanan.php" class="floating-cart-btn" id="floatingCartBtn">
+        <i class="fas fa-shopping-cart"></i>
+        <span class="floating-cart-badge" id="floatingCartBadge" style="display: <?php echo ($total_notifikasi > 0) ? 'flex' : 'none'; ?>;">
+            <?php echo $total_notifikasi; ?>
+        </span>
+    </a>
+
     <script>
         function filterKategori(kat) {
             document.querySelectorAll('.product-card').forEach(p => {
@@ -163,22 +342,92 @@ foreach ($_SESSION['keranjang'] as $item) {
             });
         }
 
+        // Fungsi untuk animasi flying to cart
+        function flyToCart(button) {
+            const productCard = button.closest('.product-card');
+            const productImg = productCard.querySelector('.product-img-wrapper img');
+            const floatingBtn = document.getElementById('floatingCartBtn');
+            
+            // Clone gambar produk
+            const flyingImg = productImg.cloneNode(true);
+            const flyingDiv = document.createElement('div');
+            flyingDiv.className = 'flying-item';
+            flyingDiv.appendChild(flyingImg);
+            
+            // Posisi awal (dari produk)
+            const startRect = productImg.getBoundingClientRect();
+            flyingDiv.style.left = startRect.left + 'px';
+            flyingDiv.style.top = startRect.top + 'px';
+            
+            // Posisi tujuan (ke floating button)
+            const endRect = floatingBtn.getBoundingClientRect();
+            const deltaX = endRect.left - startRect.left;
+            const deltaY = endRect.top - startRect.top;
+            
+            flyingDiv.style.setProperty('--tx', deltaX + 'px');
+            flyingDiv.style.setProperty('--ty', deltaY + 'px');
+            
+            document.body.appendChild(flyingDiv);
+            
+            // Hapus setelah animasi selesai
+            setTimeout(() => {
+                flyingDiv.remove();
+            }, 800);
+        }
+
+        // Fungsi untuk menampilkan toast notification
+        function showToast(title, message) {
+            const toast = document.createElement('div');
+            toast.className = 'toast-notification';
+            toast.innerHTML = `
+                <div class="toast-icon">
+                    <i class="fas fa-check"></i>
+                </div>
+                <div class="toast-content">
+                    <div class="toast-title">${title}</div>
+                    <div class="toast-message">${message}</div>
+                </div>
+            `;
+            
+            document.body.appendChild(toast);
+            
+            // Auto hide setelah 3 detik
+            setTimeout(() => {
+                toast.classList.add('hide');
+                setTimeout(() => toast.remove(), 300);
+            }, 3000);
+        }
+
         document.querySelectorAll('.form-tambah').forEach(f => {
             f.addEventListener('submit', function(e) {
-                e.preventDefault(); 
+                e.preventDefault();
                 const fd = new FormData(this);
-                fd.append('ajax_tambah', '1'); 
+                fd.append('ajax_tambah', '1');
+                const button = this.querySelector('button[type="submit"]');
+                const productName = fd.get('nama_produk');
                 
                 fetch('Katalog-Beranda.php', { method: 'POST', body: fd })
                 .then(r => r.json())
                 .then(d => {
                     if (d.status === 'success') {
+                        // Update badge di header
                         const b = document.getElementById('cart-badge');
                         b.innerText = d.total_cart;
                         b.style.display = 'inline-block';
-                        } else {
-                            alert(d.pesan);
-                        }
+                        
+                        // Update floating button badge
+                        const fb = document.getElementById('floatingCartBadge');
+                        fb.innerText = d.total_cart;
+                        fb.style.display = 'flex';
+                        
+                        // Animasi flying to cart
+                        flyToCart(button);
+                        
+                        // Tampilkan toast notification
+                        showToast('Berhasil!', `${productName} ditambahkan ke keranjang`);
+                    } else {
+                        alert(d.pesan);
+                    }
                 });
             });
         });
